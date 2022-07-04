@@ -41,7 +41,8 @@ export class Main {
   }
 
   private pluginFilter: string[] = [
-    'homebridge-config-ui-x'
+    'homebridge-config-ui-x',
+    'homebridge-music' // darwin only
   ];
 
   async run() {
@@ -65,6 +66,9 @@ export class Main {
     const response = await axios.get<string[]>('https://raw.githubusercontent.com/homebridge/verified/master/verified-plugins.json');
     this.pluginList = response.data.filter(x => !this.pluginFilter.includes(x));
     console.log(`Processing ${this.pluginList.length} verified plugins...`);
+
+    // add the homebridge package as well
+    this.pluginList.unshift('homebridge');
   }
 
   /**
@@ -184,6 +188,11 @@ export class Main {
         const assetName = this.pluginAssetName(plugin, assetType);
         const assetPath = path.join(this.workDir, assetName);
 
+        const existingAsset = this.release.assets.find(x => x.name === assetName);
+        if (existingAsset) {
+          await this.deleteAsset(existingAsset);
+        }
+
         const fileBuffer = await fs.readFile(assetPath);
 
         await this.octokit.request('POST /repos/{owner}/{repo}/releases/{release_id}/assets', {
@@ -221,14 +230,26 @@ export class Main {
         assetsToRemove.pop()
 
         for (const asset of assetsToRemove) {
-          await this.octokit.request('DELETE /repos/{owner}/{repo}/releases/assets/{asset_id}', {
-            owner: this.githubProjectOwner,
-            repo: this.githubProjectRepo,
-            asset_id: asset.id,
-          });
-          console.log(`Purged ${asset.name}...`)
+          await this.deleteAsset(asset);
         }
       }
+    }
+  }
+
+  /**
+   * Delete a release asset
+   * @param asset 
+   */
+  async deleteAsset(asset) {
+    try {
+      await this.octokit.request('DELETE /repos/{owner}/{repo}/releases/assets/{asset_id}', {
+        owner: this.githubProjectOwner,
+        repo: this.githubProjectRepo,
+        asset_id: asset.id,
+      });
+      console.log(`Purged ${asset.name}...`)
+    } catch (e) {
+      console.error(`Failed to delete asset:`, asset.name, e.messsage)
     }
   }
 
