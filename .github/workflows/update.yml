@@ -4,8 +4,8 @@ concurrency: update_plugin_repo
 
 on:
   workflow_dispatch:
-  # schedule:
-  #   - cron: '*/15 * * * *'
+  schedule:
+    - cron: '*/15 * * * *'
 
 jobs:
   build:
@@ -23,3 +23,5 @@ jobs:
         run: npm run update-repo
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: gautamkrishnar/keepalive-workflow@v1
