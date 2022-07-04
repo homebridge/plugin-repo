@@ -195,20 +195,24 @@ export class Main {
 
         const fileBuffer = await fs.readFile(assetPath);
 
-        await this.octokit.request('POST /repos/{owner}/{repo}/releases/{release_id}/assets', {
-          owner: this.githubProjectOwner,
-          repo: this.githubProjectRepo,
-          url: this.release.upload_url,
-          release_id: this.release.id,
-          name: assetName,
-          label: `${plugin.name}@${plugin.version}.${assetType}`,
-          headers: {
-            'content-type': 'application/octet-stream'
-          },
-          data: fileBuffer,
-        });
+        try {
+          await this.octokit.request('POST /repos/{owner}/{repo}/releases/{release_id}/assets', {
+            owner: this.githubProjectOwner,
+            repo: this.githubProjectRepo,
+            url: this.release.upload_url,
+            release_id: this.release.id,
+            name: assetName,
+            label: `${plugin.name}@${plugin.version}.${assetType}`,
+            headers: {
+              'content-type': 'application/octet-stream'
+            },
+            data: fileBuffer,
+          });
 
-        console.log(`Uploaded ${assetName}`);
+          console.log(`Uploaded ${assetName}`);
+        } catch (e) {
+          console.error(`Failed to upload asset:`, assetName, e.messsage)
+        }
       }
     }
   }
