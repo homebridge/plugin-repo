@@ -53,6 +53,7 @@ export class Main {
       await this.bundlePlugins();
       await this.uploadAssets();
       await this.removeOldAssets();
+      await this.updateReleaseTitle();
     } catch (e) {
       console.error('Error', e.message, e);
       process.exit(1);
@@ -115,6 +116,22 @@ export class Main {
     this.release = response.data.find(x => x.tag_name === tag);
     if (!this.release) {
       throw new Error(`Release with tag "${tag}" does not exist`);
+    }
+  }
+
+  /**
+   * Update the GitHub Release title with the current date
+   */
+  async updateReleaseTitle() {
+    try {
+      await this.octokit.request('PATCH /repos/{owner}/{repo}/releases/{release_id}', {
+        owner: this.githubProjectOwner,
+        repo: this.githubProjectRepo,
+        release_id: this.release.id,
+        name: new Date().toISOString().split('T')[0],
+      });
+    } catch (e) {
+      console.error('Could not update release title', e.message)
     }
   }
 
