@@ -196,7 +196,7 @@ export class Main {
         const fileBuffer = await fs.readFile(assetPath);
 
         try {
-          await this.octokit.request('POST /repos/{owner}/{repo}/releases/{release_id}/assets', {
+          const response = await this.octokit.request('POST /repos/{owner}/{repo}/releases/{release_id}/assets', {
             owner: this.githubProjectOwner,
             repo: this.githubProjectRepo,
             url: this.release.upload_url,
@@ -210,6 +210,12 @@ export class Main {
           });
 
           console.log(`Uploaded ${assetName}`);
+
+          // handle rate limit of GitHub API - 1000 requests per hour in GitHub Actions.
+          if (response?.headers?.['x-ratelimit-remaining'] === '0') {
+            console.log('GitHub API Rate Limit Exhausted. Remaining plugins will be processed next run.')
+            process.exit(0);
+          }
         } catch (e) {
           console.error(`Failed to upload asset:`, assetName, e.messsage)
         }
