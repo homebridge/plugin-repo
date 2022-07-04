@@ -1,5 +1,8 @@
 {
   "private": true,
+  "scripts": {
+    "update-repo": "ts-node main.ts"
+  },
   "devDependencies": {
     "@types/fs-extra": "^9.0.13",
     "ts-node": "^10.8.2",

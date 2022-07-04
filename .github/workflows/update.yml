@@ -1,0 +1,25 @@
+name: Update Plugin Repository
+
+concurrency: update_plugin_repo
+
+on:
+  workflow_dispatch:
+  # schedule:
+  #   - cron: '*/15 * * * *'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        uses: actions/setup-node@v1
+        with:
+          node-version: v16
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Update Plugin Repository
+        run: npm run update-repo
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

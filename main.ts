@@ -18,9 +18,9 @@ export class Main {
     auth: process.env.GITHUB_TOKEN
   });
 
-  private githubProjectOwner = 'oznu';
-  private githubProjectRepo = 'homebridge-plugin-repo'
-
+  private githubProjectOwner = 'homebridge';
+  private githubProjectRepo = 'plugin-repo'
+  private targetRelease = 'v1';
 
   private workDir = path.join(__dirname, 'work');
 
@@ -46,7 +46,7 @@ export class Main {
 
   async run() {
     try {
-      await this.getGitHubRelease('v1');
+      await this.getGitHubRelease(this.targetRelease);
       await this.getVerifiedPluginsList();
       await this.getLatestVersions();
       await this.bundlePlugins();
