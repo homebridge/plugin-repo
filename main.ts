@@ -63,7 +63,7 @@ export class Main {
    */
   async getVerifiedPluginsList() {
     const response = await axios.get<string[]>('https://raw.githubusercontent.com/homebridge/verified/master/verified-plugins.json');
-    this.pluginList = response.data.filter(x => !this.pluginFilter.includes(x)).filter(x => x === 'homebridge-hue');
+    this.pluginList = response.data.filter(x => !this.pluginFilter.includes(x));
     console.log(`Processing ${this.pluginList.length} verified plugins...`);
   }
 
