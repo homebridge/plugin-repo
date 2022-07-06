@@ -37,8 +37,24 @@ export class Main {
       label: string;
       created_at: string;
       updated_at: string;
+      browser_download_url: string;
+      download_count: number;
+      size: number;
     }[];
   }
+
+  private releaseStats: {
+    [key: string]: {
+      downloadCount: number;
+      versions: {
+        [key: string]: {
+          created: string;
+          size: number;
+          downloadCount: number;
+        }
+      }
+    }
+  } = {};
 
   private pluginFilter: string[] = [
     'homebridge-config-ui-x',
@@ -54,6 +70,7 @@ export class Main {
       await this.uploadAssets();
       await this.removeOldAssets();
       await this.updateReleaseTitle();
+      await this.generateDownloadStats();
     } catch (e) {
       console.error('Error', e.message, e);
       process.exit(1);
@@ -133,6 +150,66 @@ export class Main {
     } catch (e) {
       console.error('Could not update release title', e.message)
     }
+  }
+
+  /**
+   * Generate a file to keep track of the total number of downloads
+   */
+  async generateDownloadStats() {
+    const pluginBundleAssets = this.release.assets.filter(x => x.name.endsWith('.tar.gz'));
+    const releaseStatsAsset = this.release.assets.find(x => x.name === 'download-statistics.json');
+
+    if (releaseStatsAsset) {
+      const response = await axios.get(releaseStatsAsset.browser_download_url + '?date=' + new Date().getTime());
+      this.releaseStats = response.data;
+    }
+
+    for (const asset of pluginBundleAssets) {
+      const assetPlugin = asset.label.substring(0, asset.label.lastIndexOf('@'));
+      const assetversion = asset.label.substring(asset.label.lastIndexOf('@') + 1, asset.label.length).split('.tar.gz')[0];
+      
+      // initialise the plugin if we have not seen it before
+      if (!this.releaseStats[assetPlugin]) {
+        this.releaseStats[assetPlugin] = {
+          downloadCount: 0,
+          versions: {}
+        }
+      }
+
+      // set / update the stats for the current version being processed
+      this.releaseStats[assetPlugin].versions[assetversion] = {
+        downloadCount: asset.download_count,
+        size: asset.size,
+        created: asset.created_at,
+      };
+
+      // update the total download count
+      this.releaseStats[assetPlugin].downloadCount = 0;
+      for (const version of Object.values(this.releaseStats[assetPlugin].versions)) {
+        this.releaseStats[assetPlugin].downloadCount += version.downloadCount;
+      }
+    }
+
+    // remove the old download-statistics.json
+    if (releaseStatsAsset) {
+      await this.deleteAsset(releaseStatsAsset)
+    }
+
+    // upload the new download-statistics.json
+    await this.octokit.request('POST /repos/{owner}/{repo}/releases/{release_id}/assets', {
+      owner: this.githubProjectOwner,
+      repo: this.githubProjectRepo,
+      url: this.release.upload_url,
+      release_id: this.release.id,
+      name: 'download-statistics.json',
+      label: 'download-statistics.json',
+      headers: {
+        'content-type': 'application/json'
+      },
+      data: JSON.stringify(this.releaseStats),
+    });
+
+    console.log('Updated download-statistics.json...')
   }
 
   /**
