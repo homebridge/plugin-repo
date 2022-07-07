@@ -54,7 +54,7 @@ If at any step, the process fails, the Homebridge UI will fallback to using `npm
 
 ### Download Statistics
 
-This project may impact the download stats for plugins via the NPM registry.
+This project may impact the download stats for plugins provided by the NPM registry.
 
 As such download stats are available via the [download-statistics.json](https://github.com/homebridge/plugin-repo/releases/download/v1/download-statistics.json) file. This file contains the total downloads from this repo for each verified plugin, as well as the download count for each version (including old versions that have been purged).
 
