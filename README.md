@@ -61,3 +61,17 @@ As such download stats are available via the [download-statistics.json](https://
 The `download-statistics.json` file is updated every 30 minutes.
 
 If you are accessing the file programatically, you will need add a `nonce` query string to the URL to prevent it being redirected to an older (deleted) version of the file. Eg. `/download-statistics.json?nonce=1657193776`.
+
+### FAQ
+
+#### How do I get my plugin included?
+
+All [verified Homebridge plugins](https://homebridge.io/w/Verified-Plugins) are automatically included.
+
+#### What happens if a user attempts to install the latest version of my plugin before the bundle is created?
+
+The plugin will be installed directly from the NPM registry instead.
+
+#### How do I exclude my plugin from being bundled by this project?
+
+Create a pull request adding your plugin's name to the `pluginFilter: string[]` array in the [main.ts](./main.ts) file.
