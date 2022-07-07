@@ -251,7 +251,7 @@ export class Main {
           await fs.remove(path.join(targetDir, 'node_modules', '.package-lock.json'));
 
           // package plugin
-          await execAsync(`tar -C ${targetDir}/node_modules --format=posix -czf ${this.pluginAssetName(plugin, 'tar.gz')} .`, {
+          await execAsync(`tar -C ${targetDir}/node_modules --owner=0 --group=0 --format=posix -czf ${this.pluginAssetName(plugin, 'tar.gz')} .`, {
             cwd: this.workDir,
           });
 
