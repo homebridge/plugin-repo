@@ -31,7 +31,7 @@ The two most recent versions of a plugin are retained in the [Homebridge Plugin 
 
 Bundles are only used on certain systems:
 
-  * Debian-based Linux (via apt package): requires apt package update (=>1.0.27)
+  * Debian-based Linux ([via apt package](https://github.com/homebridge/homebridge-apt-pkg)): requires apt package update (=>1.0.27)
   * Docker: requires image update (=>2022-07-07)
   * Synology DSM 7: requires package update via DSM Package Center (=>3.0.7)
 
