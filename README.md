@@ -75,3 +75,11 @@ The plugin will be installed directly from the NPM registry instead.
 #### How do I exclude my plugin from being bundled by this project?
 
 Create a pull request adding your plugin's name to the `pluginFilter: string[]` array in the [main.ts](./main.ts) file.
+
+## License
+
+Copyright (C) 2022 oznu
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the [GNU General Public License](./LICENSE) for more details.
