@@ -27,6 +27,8 @@ export class Main {
   private pluginList: string[] = [];
   private pluginMap: Plugin[] = [];
 
+  private pluginsSuccessfullyUpdated: Plugin[] = [];
+
   private release: {
     id: number;
     tag_name: string;
@@ -69,7 +71,7 @@ export class Main {
       await this.bundlePlugins();
       await this.uploadAssets();
       await this.removeOldAssets();
-      await this.updateReleaseTitle();
+      await this.updateRelease();
       await this.generateDownloadStats();
     } catch (e) {
       console.error('Error', e.message, e);
@@ -137,18 +139,22 @@ export class Main {
   }
 
   /**
-   * Update the GitHub Release title with the current date
+   * Update the GitHub Release
    */
-  async updateReleaseTitle() {
-    try {
-      await this.octokit.request('PATCH /repos/{owner}/{repo}/releases/{release_id}', {
-        owner: this.githubProjectOwner,
-        repo: this.githubProjectRepo,
-        release_id: this.release.id,
-        name: new Date().toISOString().split('T')[0],
-      });
-    } catch (e) {
-      console.error('Could not update release title', e.message)
+  async updateRelease() {
+    if (this.pluginsSuccessfullyUpdated.length > 0) {
+      try {
+        await this.octokit.request('PATCH /repos/{owner}/{repo}/releases/{release_id}', {
+          owner: this.githubProjectOwner,
+          repo: this.githubProjectRepo,
+          release_id: this.release.id,
+          name: new Date().toISOString().split('T')[0],
+          body: `Recently updated plugins:\n\n` + this.pluginsSuccessfullyUpdated.map(x => '* ' + x.name + '@' + x.version).join('\n')
+        });
+        console.log('Updated release.')
+      } catch (e) {
+        console.error('Could not update release title', e.message)
+      }
     }
   }
 
@@ -167,7 +173,7 @@ export class Main {
     for (const asset of pluginBundleAssets) {
       const assetPlugin = asset.label.substring(0, asset.label.lastIndexOf('@'));
       const assetversion = asset.label.substring(asset.label.lastIndexOf('@') + 1, asset.label.length).split('.tar.gz')[0];
-      
+
       // initialise the plugin if we have not seen it before
       if (!this.releaseStats[assetPlugin]) {
         this.releaseStats[assetPlugin] = {
@@ -304,6 +310,11 @@ export class Main {
           });
 
           console.log(`Uploaded ${assetName}`);
+
+          // note the plugin update as successful
+          if (assetType === 'tar.gz') {
+            this.pluginsSuccessfullyUpdated.push(plugin);
+          }
 
           // handle rate limit of GitHub API - 1000 requests per hour in GitHub Actions.
           if (response?.headers?.['x-ratelimit-remaining'] === '0') {
