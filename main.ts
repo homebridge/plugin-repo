@@ -58,10 +58,27 @@ export class Main {
     }
   } = {};
 
+  /**
+   * Plugins to exclude from bundling
+   */
   private pluginFilter: string[] = [
     'homebridge-config-ui-x',
     'homebridge-music' // darwin only
   ];
+
+  /**
+   * Non-verified plugins / packages to bundle
+   * Typically for a non-verified plugin to be included it should have > 100 downloads per week
+   */
+  private additionalPlugins: string[] = [
+    'homebridge',
+    'homebridge-broadlink-rm',
+    'homebridge-http-switch',
+    'homebridge-tasmota',
+    'homebridge-daikin-esp8266',
+    'homebridge-esp8266-fan',
+    '@oznu/homebridge-esp8266-garage-door',
+  ]
 
   async run() {
     try {
@@ -88,7 +105,7 @@ export class Main {
     console.log(`Processing ${this.pluginList.length} verified plugins...`);
 
     // add the homebridge package as well
-    this.pluginList.unshift('homebridge');
+    this.pluginList.push(...this.additionalPlugins);
   }
 
   /**
