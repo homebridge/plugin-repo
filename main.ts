@@ -72,7 +72,7 @@ export class Main {
    */
   private additionalPlugins: string[] = [
     'homebridge',
-    'homebridge-broadlink-rm',
+    'homebridge-broadlink-rm-pro',
     'homebridge-http-switch',
     'homebridge-tasmota',
     'homebridge-daikin-esp8266',
