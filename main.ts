@@ -104,8 +104,12 @@ export class Main {
     this.pluginList = response.data.filter(x => !this.pluginFilter.includes(x));
     console.log(`Processing ${this.pluginList.length} verified plugins...`);
 
-    // add the homebridge package as well
-    this.pluginList.push(...this.additionalPlugins);
+    // add additional plugins, checking to make sure we are not adding duplicates
+    for (const plugin of this.additionalPlugins) {
+      if (!this.pluginList.includes(plugin)) {
+        this.pluginList.push(plugin);
+      }
+    }
   }
 
   /**
