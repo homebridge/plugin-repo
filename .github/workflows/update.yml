@@ -5,7 +5,7 @@ concurrency: update_plugin_repo
 on:
   workflow_dispatch:
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: '47 12 * * *'
 
 jobs:
   build:
