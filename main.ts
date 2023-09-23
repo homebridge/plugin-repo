@@ -100,7 +100,7 @@ export class Main {
    * Get the verified plugins list
    */
   async getVerifiedPluginsList() {
-    const response = await axios.get<string[]>('https://raw.githubusercontent.com/homebridge/verified/master/verified-plugins.json');
+    const response = await axios.get<string[]>('https://raw.githubusercontent.com/homebridge/verified/main/verified-plugins.json');
     this.pluginList = response.data.filter(x => !this.pluginFilter.includes(x));
     console.log(`Processing ${this.pluginList.length} verified plugins...`);
 
@@ -145,7 +145,7 @@ export class Main {
 
   /**
    * Get the github release for the project
-   * @param version 
+   * @param version
    */
   async getGitHubRelease(tag: string) {
     const response = await this.octokit.request('GET /repos/{owner}/{repo}/releases', {
@@ -374,7 +374,7 @@ export class Main {
 
   /**
    * Delete a release asset
-   * @param asset 
+   * @param asset
    */
   async deleteAsset(asset) {
     try {
