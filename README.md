@@ -27,6 +27,8 @@ Plugins that require updates are then:
 
 The two most recent versions of a plugin are retained in the [Homebridge Plugin Repo](https://github.com/homebridge/plugin-repo/releases/tag/v1), older versions are purged automatically.
 
+**Asset Limit Management**: GitHub releases have a maximum of 1000 assets per release. To prevent hitting this limit, the system proactively removes old plugin versions when approaching the limit, ensuring only the most recent version of each plugin's bundles are kept with a safety buffer of 100 assets.
+
 ### How Plugins Are Installed Via Bundles
 
 Bundles are only used on certain systems:
