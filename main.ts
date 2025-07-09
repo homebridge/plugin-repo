@@ -414,7 +414,7 @@ export class Main {
             process.exit(0);
           }
         } catch (e) {
-          console.error(`Failed to upload asset:`, assetName, e.messsage);
+          console.error(`Failed to upload asset:`, assetName, e.message);
           
           // If we hit the asset limit, try to clean up and continue
           if (e.message && e.message.includes('file_count limited to 1000 assets per release')) {
