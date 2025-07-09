@@ -2,3 +2,5 @@ work
 node_modules
 .nodenv-vars
 .idea
+test-asset-limit.js
+dist/
