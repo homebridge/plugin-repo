@@ -86,6 +86,7 @@ export class Main {
       await this.getVerifiedPluginsList();
       await this.getLatestVersions();
       await this.bundlePlugins();
+      await this.ensureAssetLimit();
       await this.uploadAssets();
       await this.removeOldAssets();
       await this.updateRelease();
@@ -240,6 +241,76 @@ export class Main {
   }
 
   /**
+   * Ensure we stay under the GitHub asset limit (1000 assets per release)
+   * by proactively removing old assets before uploading new ones
+   */
+  async ensureAssetLimit() {
+    const ASSET_LIMIT = 1000;
+    const SAFETY_BUFFER = 100; // Keep some buffer for safety
+    const MAX_ASSETS = ASSET_LIMIT - SAFETY_BUFFER;
+
+    // Estimate how many assets we'll upload (2 per plugin: tar.gz + sha256)
+    const assetsToUpload = this.pluginMap.length * 2;
+    
+    // Add 1 for the download-statistics.json file
+    const totalAssetsNeeded = assetsToUpload + 1;
+
+    console.log(`Current assets: ${this.release.assets.length}, will upload: ${assetsToUpload}, limit: ${ASSET_LIMIT}`);
+
+    if (this.release.assets.length + totalAssetsNeeded > MAX_ASSETS) {
+      console.log('Approaching asset limit, proactively removing old assets...');
+      
+      // Get all plugin assets (tar.gz and sha256 files)
+      const pluginAssets = this.release.assets.filter(x => 
+        x.name.endsWith('.tar.gz') || x.name.endsWith('.sha256')
+      );
+
+      // Group assets by plugin name
+      const assetsByPlugin = new Map<string, typeof pluginAssets>();
+      for (const asset of pluginAssets) {
+        const pluginName = asset.label.substring(0, asset.label.lastIndexOf('@'));
+        if (!assetsByPlugin.has(pluginName)) {
+          assetsByPlugin.set(pluginName, []);
+        }
+        assetsByPlugin.get(pluginName)!.push(asset);
+      }
+
+      // For each plugin, keep only the most recent version
+      const assetsToRemove: typeof pluginAssets = [];
+      for (const [pluginName, assets] of assetsByPlugin) {
+        // Group by asset type (tar.gz and sha256)
+        const tarGzAssets = assets.filter(x => x.name.endsWith('.tar.gz'))
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        const sha256Assets = assets.filter(x => x.name.endsWith('.sha256'))
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+        // Keep only the most recent version, remove the rest
+        if (tarGzAssets.length > 1) {
+          assetsToRemove.push(...tarGzAssets.slice(1));
+        }
+        if (sha256Assets.length > 1) {
+          assetsToRemove.push(...sha256Assets.slice(1));
+        }
+      }
+
+      // Remove old assets
+      for (const asset of assetsToRemove) {
+        await this.deleteAsset(asset);
+      }
+
+      // Refresh the release data to get updated asset count
+      await this.getGitHubRelease(this.targetRelease);
+      
+      console.log(`After cleanup: ${this.release.assets.length} assets remaining`);
+      
+      // If we're still too close to the limit, log a warning
+      if (this.release.assets.length + totalAssetsNeeded > MAX_ASSETS) {
+        console.warn(`Warning: Still approaching asset limit. Current: ${this.release.assets.length}, needed: ${totalAssetsNeeded}, max: ${MAX_ASSETS}`);
+      }
+    }
+  }
+
+  /**
    * Create a bundle for the verified plugins
    */
   async bundlePlugins() {
@@ -343,7 +414,38 @@ export class Main {
             process.exit(0);
           }
         } catch (e) {
-          console.error(`Failed to upload asset:`, assetName, e.messsage)
+          console.error(`Failed to upload asset:`, assetName, e.messsage);
+          
+          // If we hit the asset limit, try to clean up and continue
+          if (e.message && e.message.includes('file_count limited to 1000 assets per release')) {
+            console.log('Hit asset limit during upload, attempting cleanup...');
+            await this.ensureAssetLimit();
+            
+            // Try uploading again after cleanup
+            try {
+              const retryResponse = await this.octokit.request('POST /repos/{owner}/{repo}/releases/{release_id}/assets', {
+                owner: this.githubProjectOwner,
+                repo: this.githubProjectRepo,
+                url: this.release.upload_url,
+                release_id: this.release.id,
+                name: assetName,
+                label: `${plugin.name}@${plugin.version}.${assetType}`,
+                headers: {
+                  'content-type': 'application/octet-stream'
+                },
+                data: fileBuffer,
+              });
+              
+              console.log(`Uploaded ${assetName} after cleanup`);
+              
+              // note the plugin update as successful
+              if (assetType === 'tar.gz') {
+                this.pluginsSuccessfullyUpdated.push(plugin);
+              }
+            } catch (retryError) {
+              console.error(`Failed to upload asset after cleanup:`, assetName, retryError.message);
+            }
+          }
         }
       }
     }
